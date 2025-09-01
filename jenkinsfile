@@ -23,7 +23,7 @@ pipeline {
             steps {
                 script {
                     sh """
-                    docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                        docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
                     """
                 }
             }
@@ -35,9 +35,9 @@ pipeline {
                                                  usernameVariable: 'DOCKER_USER',
                                                  passwordVariable: 'DOCKER_PASS')]) {
                     sh """
-                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                    docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
-                    docker logout
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+                        docker logout
                     """
                 }
             }
@@ -46,10 +46,21 @@ pipeline {
         stage('Deploy Container') {
             steps {
                 sh """
-                docker rm -f java-project || true
-                docker run -d --name java-project -p 8080:8080 ${DOCKER_IMAGE}:${DOCKER_TAG}
+                    docker rm -f java-project || true
+                    docker run -d --name java-project -p 8080:8080 ${DOCKER_IMAGE}:${DOCKER_TAG}
                 """
             }
         }
     }
+
+    post {
+        success {
+            echo '✅ Build, Dockerize, and Deploy successful!'
+        }
+        failure {
+            echo '❌ Pipeline failed. Please check logs.'
+        }
+    }
+}
+
 
