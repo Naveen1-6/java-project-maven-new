@@ -53,14 +53,5 @@ pipeline {
         }
     }
 
-    post {
-        success {
-            echo '✅ Build, Dockerize, and Deploy successful!'
-        }
-        failure {
-            echo '❌ Pipeline failed. Please check logs.'
-        }
-    }
-}
 
 
