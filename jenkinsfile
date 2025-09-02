@@ -1,19 +1,8 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_IMAGE = "your-dockerhub-username/java-project-maven-new"
-        DOCKER_TAG = "latest"
-    }
-
     stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'main', url: 'https://github.com/Naveen1-6/java-project-maven-new.git'
-            }
-        }
-
-        stage('Build with Maven') {
+        stage('Build') {
             steps {
                 sh 'mvn clean package -DskipTests'
             }
@@ -21,37 +10,46 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
+                sh 'docker build -t myapp:v1 .'
+            }
+        }
+
+        stage('Run Container (Local Test)') {
+            steps {
                 script {
-                    sh """
-                        docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
-                    """
+                    // Stop & remove old container if exists
+                    sh 'docker rm -f myapp-cont || true'
+                    
+                
+                    sh 'docker run -d --name myapp-cont -p 8082:8080 myapp:v1'
                 }
             }
         }
 
-        stage('Push to Docker Hub') {
+        stage('Check Container Logs') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials',
-                                                 usernameVariable: 'DOCKER_USER',
-                                                 passwordVariable: 'DOCKER_PASS')]) {
-                    sh """
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
-                        docker logout
-                    """
-                }
+                sh 'docker ps -a | grep myapp-cont'
+                sh 'docker logs myapp-cont || true'
             }
         }
 
-        stage('Deploy Container') {
+        stage('Deploy to Docker Swarm') {
             steps {
-                sh """
-                    docker rm -f java-project || true
-                    docker run -d --name java-project -p 8080:8080 ${DOCKER_IMAGE}:${DOCKER_TAG}
-                """
+                script {
+                    // Create/Update Swarm service
+                    sh '''
+                    docker service rm myapp-service || true
+
+                    docker service create \
+                        --name myapp-service \
+                        --publish 8082:8080 \
+                        --replicas 5 \
+                        myapp:v1
+                    '''
+                }
             }
         }
     }
-
+}
 
 
