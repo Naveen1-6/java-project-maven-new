@@ -19,8 +19,6 @@ pipeline {
                 script {
                     // Stop & remove old container if exists
                     sh 'docker rm -f myapp-cont || true'
-                    
-                
                     sh 'docker run -d --name myapp-cont -p 8082:8080 myapp:v1'
                 }
             }
@@ -33,7 +31,8 @@ pipeline {
             }
         }
 
-    /*    stage('Deploy to Docker Swarm') {
+        /*
+        stage('Deploy to Docker Swarm') {
             steps {
                 script {
                     // Create/Update Swarm service
@@ -49,7 +48,7 @@ pipeline {
                 }
             }
         }
-    }
-}
-*/
+        */
+    } 
 
+} 
